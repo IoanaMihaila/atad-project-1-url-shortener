@@ -50,7 +50,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ github.repository }}:latest
+          tags: ghcr.io/ioanamihaila/atad-project-1-url-shortener:latest
           # This is what lets the marking script prove the image was built from
           # the commit you submitted. Do not remove it.
           build-args: |
