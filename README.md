@@ -1,62 +1,46 @@
-# [ URL Shortener with Analytics ]
+# URL Shortener with Analytics
 
-[One paragraph: what this program does and who would use it. Replace this
-whole file — it is your project's front door, and it is marked.]
+A lightweight HTTP web service written in Go that turns long `http`/`https` URLs into short codes, redirects visitors to the original address, and tracks visit counts and timestamps per link. It is built for anyone who needs shareable short links with basic usage analytics and persistent storage across service restarts.
 
-- **Student:** [Mihaila Ioana], group [DMWD]
-- **Project:** [Project 1 - URL Shortener with Analytics]
+- **Student:** Mihaila Ioana, group DMWD
+- **Project:** Project 1 - URL Shortener with Analytics
 - **Language:** Go
 
 ## What it does
 
-[Two or three paragraphs. What problem it solves, what it does not do, and
-what state it is in.]
+The service exposes a REST-like JSON API for creating, listing, inspecting, and deleting short links, along with a redirect endpoint (`GET /{code}`) that forwards visitors via HTTP `302 Found`. Users can either request a custom short code (4 to 10 characters) or let the server generate a unique 7-character code automatically. Every redirect increments the link's visit counter and updates `last_visit_at`, while reading the statistics endpoint does not affect the count.
+
+To keep the service focused, it does not implement user authentication, link expiration dates, custom domains, or a frontend dashboard—it acts purely as a containerized backend service behind HTTP on port `8080`.
+
+At the moment, the repository structure, metadata, CI pipeline, and architecture documentation are set up, while the URL shortener handlers, disk persistence, and tests are in active development.
 
 ## How to run it
 
-```
-docker run --rm -p 8080:8080 ghcr.io/[user]/[repo]:latest
-```
+    docker run --rm -p 8080:8080 ghcr.io/ioanamihaila/atad-project-1-url-shortener:latest
 
-To build and run without Docker:
+To build and run locally without Docker:
 
-```
-go run ./cmd/app
-go run ./cmd/app --version
-```
+    go run ./cmd/app
+    go run ./cmd/app --version
 
 ## What you should see
 
-[What a successful run looks like. If it is a service, one request and its
-response. If it is a tool, one command and its output. A reader who has never
-seen your project must be able to tell whether it worked.]
+Once the service is running on `http://localhost:8080`, checking `/health` returns HTTP `200 OK`:
 
----
+    curl.exe -i http://localhost:8080/health
 
-## Before you delete these notes
+    HTTP/1.1 200 OK
+    Content-Type: application/json
 
-**Fill in `atad.json` first.** Name, group, student id, email, project number
-and title, language, and the command that runs your project. The marking script reads this file. A field left as
-`[placeholder]` counts as missing.
+    {"status":"ok","uptime_seconds":5}
 
-**`--version` is part of the contract.** It must print one line of JSON with
-`app`, `version`, `commit` and `built_at`, and exit 0. The `commit` value is
-stamped into the binary by the Dockerfile from the SHA that CI supplies, which
-is how it is proved that the published image was built from the code you
-submitted. Do not print it yourself, and do not remove the test that checks it.
+Creating a short link and following its redirect looks like this:
 
-**The four contract routes are not optional.** `/health`, `/version`, `/` and
-`POST /reset` must answer exactly as the project document specifies, in every
-project. They are checked automatically, and a right answer with the wrong
-status code is a wrong answer.
+    curl.exe -i -H "Content-Type: application/json" -d '{"url":"https://go.dev/doc/effective_go","code":"gofmt"}' http://localhost:8080/links
 
-**Layout.** `cmd/app` is the entry point, `internal/` is your own packages,
-and `docs/` holds your documentation. Add packages under `internal/` as the
-project grows; a single 800-line `main.go` is not a design.
+    HTTP/1.1 201 Created
+    Content-Type: application/json
 
-**`docs/` has fixed names.** `docs/architecture.md` is due in week 7 and
-`docs/report.docx` at the end. `docs/README.md` explains both — read it, and do
-not edit or delete it.
+    {"id":1,"code":"gofmt","url":"https://go.dev/doc/effective_go","created_at":"2026-11-16T21:00:00Z"}
 
-**Do not commit** `coverage/`, build output, or anything with a credential in
-it. `.gitignore` already covers the usual cases.
+Visiting `http://localhost:8080/gofmt` responds with `302 Found` and `Location: https://go.dev/doc/effective_go`.
